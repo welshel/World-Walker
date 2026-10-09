@@ -4,44 +4,46 @@ FINAL_STATUS = P_RELEASE1_PARTIAL_FRESH_CLONE_E2E
 
 ## Repository
 
-- RELEASE_ROOT = `release/natural_language_3d_video_pipeline_release1`
-- GIT_COMMIT = `b720c0ad6a291a27858e7d1c35eaf41fce6eefd1`
-- FILE_COUNT = 96
-- REPO_SIZE_MB = 0.57
-- Camera planner self-contained = `True`
-- FLUX integration closed = `True`
-- Model registry template/local separation = `True`
-- Environment checker = `True`
+- RELEASE_ROOT = release/natural_language_3d_video_pipeline_release1
+- Validated source commit = 83f425e685028cc4e2254369990ed4206714b425
+- 99 tracked files; 0.576 MiB tracked source.
+- Camera planner is self-contained; FLUX integration and alignment audit are repository-owned.
+- Agent2Topdown real API provider was configured and used. No mock fallback occurred.
+- Project license remains undecided.
 
 ## Validation
 
-- Secret scan: **PASS**
-- Large-file scan: **PASS**
-- Model-weight/video/PLY scan: **PASS**
-- Private-data scan: **PASS**
-- Absolute-path scan: **PASS**
-- Symlink scan: **PASS**
-- Compile: **PASS**
-- Unit tests: **PASS (23 tests)**
-- CLI/config/portable-path tests: **PASS**
+- Secret, large-file, model-weight, private-data, private-path and symlink scans: PASS.
+- Compile: PASS.
+- Unit tests: PASS (24).
+- CLI help, text/image dry-run and mutual-exclusion checks: PASS.
+- Environment checker: PASS for required components; SeedVR2 OPTIONAL_DISABLED.
+- Fresh clone checkout: github_repro_test_release1/repo.
 
-## Isolated natural-language E2E
+## Real natural-language E2E
 
-The fresh clone was run from `github_repro_test_release1/repo` with a new garden prompt. No artifact from earlier `ict_project/work` experiments was copied into the run. The run stopped at the real Agent2Topdown provider gate because `DEEPSEEK_API_KEY` was intentionally unset. It produced no topdown, PLY, proxy, anchor, or video output.
+- Agent2Topdown: PASS using real DeepSeek provider; a new topdown was generated.
+- FLUX topdown refinement: PASS, seed 3 manually reviewed as strict nadir; layout adherence PARTIAL.
+- TripoSplat: PASS; generated 262,144-Gaussian PLY from this run's reviewed topdown_used image.
+- Camera: PASS on native 61 frames; collision and motion checks passed.
+- Proxy: PASS, 61 frames at 24 FPS and 896x512. Visual inspection shows a greenhouse-front-dominated arc with limited garden coverage.
+- FLUX endpoint anchors: FAIL overall. Global 000 alignment = FAIL (homography scale 1.462); global 060 = PARTIAL (scale 1.156).
+- FixAnything: NOT_RUN. The pipeline stopped at the FLUX alignment gate, as required.
+- SeedVR2: SKIPPED_DISABLED.
+- No final video was produced. Full resume cache and SeedVR2 toggle-cache tests are not applicable until the core E2E passes.
 
-- NATURAL_LANGUAGE_E2E_EXECUTED = **TRUE**
-- AGENT2TOPDOWN = **FAIL_PROVIDER_GATE** (`AGENT2TOPDOWN_PROVIDER_NOT_CONFIGURED`)
-- MOCK_FALLBACK_USED = **FALSE**
-- TripoSplat / Camera / Proxy / FLUX / FixAnything = **NOT_RUN**
-- SeedVR2 = **SKIPPED_DISABLED**
-- `--resume` = **FAIL_PROVIDER_GATE_REPRODUCED; no stage was cached**
+Hashes, selected seeds, timings and stage metrics are in github_repro_test_release1/e2e_text_real/e2e_lineage.json. The run output and final visual audit are kept outside ict_project/.
 
-No final video was generated, so frame count, FPS, resolution and SHA256 are `null`.
+## Readiness
 
-## Release readiness
+- TECHNICAL_GITHUB_READY = PARTIAL
+- PROJECT_LICENSE_READY = NO
+- PUBLIC_RELEASE_READY = PARTIAL
 
-- TECHNICAL_GITHUB_READY = **PARTIAL**
-- PROJECT_LICENSE_READY = **NO**
-- PUBLIC_RELEASE_READY = **PARTIAL**
+Remaining blockers:
+1. Resolve endpoint anchor alignment before FixAnything can run.
+2. Improve the camera planner's scene coverage in a separate trajectory-quality task; this release pass did not change the camera method.
+3. Complete resume-cache testing after a successful core E2E.
+4. Record remaining external revision pins and select a project license before public release.
 
-Remaining blockers are listed in `report.json`. The project license was deliberately not selected.
+No GitHub remote or push was performed.
