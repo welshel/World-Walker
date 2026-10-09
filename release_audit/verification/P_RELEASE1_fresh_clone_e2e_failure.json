@@ -1,0 +1,21 @@
+{
+  "FINAL_E2E_STATUS": "FAIL",
+  "INPUT_MODE": "text",
+  "REAL_PROVIDER_USED": false,
+  "MOCK_FALLBACK_USED": false,
+  "TOPDOWN_GENERATED_IN_THIS_RUN": false,
+  "FAILED_STAGE": "agent2topdown",
+  "ERROR": "AGENT2TOPDOWN_PROVIDER_NOT_CONFIGURED",
+  "DOWNSTREAM_STAGES": {
+    "flux_topdown": "NOT_RUN",
+    "input": "NOT_RUN",
+    "triposplat": "NOT_RUN",
+    "camera": "NOT_RUN",
+    "proxy": "NOT_RUN",
+    "flux_anchor": "NOT_RUN",
+    "fixanything": "NOT_RUN",
+    "seedvr2": "NOT_RUN",
+    "report": "NOT_RUN"
+  },
+  "RESUME_RESULT": "FAIL_PROVIDER_GATE_REPRODUCED; no stage cached"
+}
