@@ -62,7 +62,8 @@ class ReleaseOneConfigTests(unittest.TestCase):
 
     def test_unconfigured_environment_returns_component_statuses(self):
         with tempfile.TemporaryDirectory() as directory:
-            result = evaluate(ROOT / "configs/default.yaml", "text", Path(directory))
+            with patch("pipeline.utils.paths._load_local_env"), patch.dict("os.environ", {}, clear=True):
+                result = evaluate(ROOT / "configs/default.yaml", "text", Path(directory))
         self.assertEqual(result["FINAL_ENV_STATUS"], "FAIL")
         self.assertEqual(result["checks"]["SEEDVR2"]["status"], "OPTIONAL_DISABLED")
         self.assertEqual(result["checks"]["AGENT2TOPDOWN"]["reason"], "AGENT2TOPDOWN_PROVIDER_NOT_CONFIGURED")
