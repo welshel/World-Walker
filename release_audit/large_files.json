@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "threshold_bytes": 10485760,
+  "large_files": [],
+  "model_weights": [],
+  "model_weights_included": false
+}

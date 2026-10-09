@@ -1,0 +1,22 @@
+test_cli_requires_exactly_one_input_mode (test_pipeline_integration.Pipe1IntegrationTests.test_cli_requires_exactly_one_input_mode) ... ok
+test_final_output_falls_back_to_fixanything_when_seedvr2_is_off_or_fails (test_pipeline_integration.Pipe1IntegrationTests.test_final_output_falls_back_to_fixanything_when_seedvr2_is_off_or_fails) ... ok
+test_flux_topdown_stage_waits_for_visual_review_before_approval (test_pipeline_integration.Pipe1IntegrationTests.test_flux_topdown_stage_waits_for_visual_review_before_approval) ... ok
+test_input_mode_resolver_rejects_missing_or_ambiguous_values (test_pipeline_integration.Pipe1IntegrationTests.test_input_mode_resolver_rejects_missing_or_ambiguous_values) ... ok
+test_legacy_numeric_stage_ids_and_new_names (test_pipeline_integration.Pipe1IntegrationTests.test_legacy_numeric_stage_ids_and_new_names) ... ok
+test_pipeline_finalizes_report_only_after_report_stage_runs (test_pipeline_integration.Pipe1IntegrationTests.test_pipeline_finalizes_report_only_after_report_stage_runs) ... ok
+test_rgba_topdown_has_transparent_white_border_and_opaque_source (test_pipeline_integration.Pipe1IntegrationTests.test_rgba_topdown_has_transparent_white_border_and_opaque_source) ... ok
+test_seedvr2_fingerprint_depends_only_on_fixanything_video (test_pipeline_integration.Pipe1IntegrationTests.test_seedvr2_fingerprint_depends_only_on_fixanything_video) ... ok
+test_seedvr2_toggle_does_not_invalidate_upstream_stage_config (test_pipeline_integration.Pipe1IntegrationTests.test_seedvr2_toggle_does_not_invalidate_upstream_stage_config) ... ok
+test_text_mode_uses_reviewed_flux_topdown_as_downstream_source (test_pipeline_integration.Pipe1IntegrationTests.test_text_mode_uses_reviewed_flux_topdown_as_downstream_source) ... ok
+test_triposplat_env_adds_the_package_parent_to_pythonpath (test_pipeline_integration.Pipe1IntegrationTests.test_triposplat_env_adds_the_package_parent_to_pythonpath) ... ok
+test_config_relative_root (test_release_contract.ReleaseContractTests.test_config_relative_root) ... ok
+test_defaults (test_release_contract.ReleaseContractTests.test_defaults) ... ok
+test_dry_run_both_modes (test_release_contract.ReleaseContractTests.test_dry_run_both_modes) ... ok
+test_mutually_exclusive_inputs (test_release_contract.ReleaseContractTests.test_mutually_exclusive_inputs) ... ok
+test_seedvr2_enable_does_not_change_fixanything_fingerprint (test_release_contract.ReleaseContractTests.test_seedvr2_enable_does_not_change_fixanything_fingerprint) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.078s
+
+OK
+P_VSR0 efficient RoPE shim unavailable: ModuleNotFoundError("No module named 'models'")

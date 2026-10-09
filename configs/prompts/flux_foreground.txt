@@ -1,0 +1,27 @@
+Edit the first image.
+
+Image A is the target garden view and is the absolute source of camera viewpoint, perspective, framing, composition, geometry, object positions, object sizes, silhouettes, and spatial layout.
+
+Image B is a top-down reference image of the same garden. Use Image B only to understand the identity and real-world appearance of this same garden, including the greenhouse, fountain, benches, vegetation, flower beds, stone paths, lawn, and garden materials.
+
+Do not copy the top-down viewpoint or composition from Image B.
+
+Preserve exactly the camera viewpoint, perspective, framing, geometry, object positions, object sizes, silhouettes, and spatial layout of Image A.
+
+Convert only the already-visible garden scene in Image A into a realistic photograph captured by a physical camera.
+
+Preserve the greenhouse structure and entrance, greenhouse glass and frame, fountain, benches, flower beds, trees, shrubs, lawn, stone paths, statues, and all other visible garden objects in their existing locations and shapes.
+
+Improve only realistic materials and appearance:
+greenhouse glass transparency and reflections, metal structure, fountain stone and water, wooden benches, foliage microstructure, flowers, grass, soil, paths, physically plausible shadows, lighting, and photographic texture.
+
+Do not redesign the garden.
+Do not move, add, remove, resize, duplicate, or replace foreground objects.
+Do not change the camera.
+Do not crop or zoom.
+Do not alter scene geometry.
+
+Keep the pure-black exterior regions outside the reconstructed garden black in this stage.
+Do not generate a new exterior background yet.
+
+Remove CGI and synthetic-render appearance while preserving exact spatial alignment with Image A.

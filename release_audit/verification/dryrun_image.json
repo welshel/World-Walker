@@ -1,0 +1,28 @@
+{
+  "DRY_RUN": true,
+  "INPUT_MODE": "image",
+  "INPUT": "/tmp/nonexistent-topdown.png",
+  "SCENE_PROMPT": null,
+  "CONFIG": "<RELEASE_ROOT>/configs/image_input_example.yaml",
+  "PROJECT_ROOT": "<RELEASE_ROOT>",
+  "OUTPUT": "<OUTPUT_ROOT>",
+  "PLANNED_STAGES": [
+    "agent2topdown",
+    "input",
+    "triposplat",
+    "camera",
+    "proxy",
+    "flux_anchor",
+    "fixanything",
+    "seedvr2",
+    "report"
+  ],
+  "NATIVE_FRAMES": 61,
+  "TEMPORAL_RESAMPLING": false,
+  "CLEAN_FRAME_INDICES": [
+    0,
+    60
+  ],
+  "SEEDVR2_ENABLED": false,
+  "MODEL_EXECUTION": false
+}

@@ -1,0 +1,43 @@
+Edit this image.
+
+Treat all existing non-black content as a finished, realistic, and geometrically correct garden photograph.
+
+Preserve exactly all existing non-black content.
+
+Do not modify, regenerate, redesign, move, resize, remove, duplicate, or reinterpret the existing garden foreground.
+
+Only replace the uniform pure-black exterior regions that are connected to the image boundary.
+
+Treat those black regions as missing scenery outside the reconstructed garden.
+
+Fill those missing exterior regions with a natural photorealistic continuation of a quiet landscaped botanical garden environment under soft neutral daytime lighting.
+
+Use a simple and visually subordinate background:
+natural blue sky,
+soft light clouds,
+distant deciduous vegetation,
+a low-frequency distant tree line,
+subtle landscaped greenery,
+and realistic atmospheric depth.
+
+Do not create distinctive landmarks.
+
+Do not generate buildings, roads, cars, people, towers, mountains, dramatic hills, giant isolated trees, dramatic clouds, fog, sunset, or fantasy scenery.
+
+The generated environment must remain spatially behind the existing reconstructed garden.
+
+Do not place new objects in front of existing garden geometry.
+
+Preserve foreground silhouettes exactly, especially greenhouse frame and roof boundaries, fountain, benches, flower beds, shrubs, trees, and foliage boundaries.
+
+Match the existing daylight, exposure, color temperature, atmospheric perspective, and physical-camera realism.
+
+Fill all boundary-connected black regions continuously.
+
+No black holes, black seams, dark halos, or disconnected black exterior regions should remain.
+
+Do not change the camera.
+Do not crop or zoom.
+Do not recompose the scene.
+
+Only complete the missing exterior environment.

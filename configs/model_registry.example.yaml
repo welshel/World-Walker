@@ -1,0 +1,23 @@
+# Local paths only; no weights are downloaded or bundled by this repository.
+triposplat:
+  repo: ${TRIPOSPLAT_SNAPSHOT}
+  checkpoint: ${TRIPOSPLAT_CKPT_ROOT}
+flux:
+  model_id: black-forest-labs/FLUX.2-klein-4B
+  source: ModelScope
+  checkpoint: ${FLUX_MODEL_PATH}
+diffsynth:
+  repo: ${DIFFSYNTH_ROOT}
+fixanything:
+  repo: ${FIXANYTHING_ROOT}
+  checkpoint: ${FIXANYTHING_MODEL_PATH}
+  lora: ${FIXANYTHING_LORA_PATH}
+seedvr2:
+  enabled: false
+  repo: ${SEEDVR2_ROOT}
+  checkpoint: ${SEEDVR2_MODEL_PATH}
+  vae_checkpoint: ${SEEDVR2_VAE_PATH}
+agent2topdown:
+  repo_or_checkout: ${AGENT2TOPDOWN_ROOT}
+  provider: DeepSeek API
+  api_key_env: DEEPSEEK_API_KEY

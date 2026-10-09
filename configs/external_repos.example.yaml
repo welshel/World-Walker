@@ -1,0 +1,59 @@
+# Provenance registry. NOT_AVAILABLE means this local installation was not a Git checkout.
+components:
+  - name: Agent2Topdown
+    upstream_url: UNKNOWN_INTERNAL_SOURCE
+    expected_commit: null
+    commit_status: NOT_AVAILABLE
+    repo_env_var: AGENT2TOPDOWN_ROOT
+    checkpoint_env_var: null
+    role: natural-language layout generation using DeepSeek API
+    required: true
+    provider_env_var: DEEPSEEK_API_KEY
+  - name: TripoSplat
+    upstream_url: https://github.com/VAST-AI-Research/TripoSplat
+    expected_commit: d8db9e018b413dd9c4a9fe22463781bf98e8e68d
+    commit_status: VERIFIED_REFERENCE_COMMIT; installed snapshot has no .git metadata
+    repo_env_var: TRIPOSPLAT_SNAPSHOT
+    checkpoint_env_var: TRIPOSPLAT_CKPT_ROOT
+    role: image-to-Gaussian scene reconstruction
+    required: true
+  - name: FLUX.2 Klein 4B
+    upstream_url: https://huggingface.co/black-forest-labs/FLUX.2-klein-4B
+    expected_commit: null
+    commit_status: MODEL_REVISION_NOT_PINNED
+    repo_env_var: null
+    checkpoint_env_var: FLUX_MODEL_PATH
+    role: topdown refinement and endpoint image editing; weights expected from ModelScope local cache
+    required: true
+  - name: DiffSynth-Studio
+    upstream_url: https://github.com/modelscope/DiffSynth-Studio
+    expected_commit: c458cb42ab1ee838bff85c6546e14bb01c3571e9
+    commit_status: VERIFIED_LOCAL_HEAD
+    repo_env_var: DIFFSYNTH_ROOT
+    checkpoint_env_var: null
+    role: FLUX.2 Klein inference library
+    required: true
+  - name: FixAnything
+    upstream_url: UNKNOWN_UPSTREAM_URL
+    expected_commit: 744023e987920af352b880f60cc8841c96a0a105
+    commit_status: VERIFIED_LOCAL_HEAD
+    repo_env_var: FIXANYTHING_ROOT
+    checkpoint_env_var: FIXANYTHING_MODEL_PATH
+    role: Wan-based video propagation with endpoint anchors
+    required: true
+  - name: Wan2.1
+    upstream_url: https://github.com/Wan-Video/Wan2.1
+    expected_commit: null
+    commit_status: MODEL_WEIGHTS_NOT_GIT_PINNED
+    repo_env_var: null
+    checkpoint_env_var: FIXANYTHING_MODEL_PATH
+    role: FixAnything base video model weights
+    required: true
+  - name: SeedVR2
+    upstream_url: https://github.com/ByteDance-Seed/SeedVR2
+    expected_commit: null
+    commit_status: NOT_AVAILABLE_IN_THIS_RUN
+    repo_env_var: SEEDVR2_ROOT
+    checkpoint_env_var: SEEDVR2_MODEL_PATH
+    role: optional 2x video super-resolution
+    required: false

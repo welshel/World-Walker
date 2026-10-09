@@ -1,0 +1,29 @@
+P_VSR0 efficient RoPE shim unavailable: ModuleNotFoundError("No module named 'models'")
+usage: run_pipeline.py [-h]
+                       (--input-topdown INPUT_TOPDOWN | --scene-prompt SCENE_PROMPT)
+                       [--config CONFIG] --output OUTPUT
+                       [--start-stage START_STAGE] [--stop-stage STOP_STAGE]
+                       [--resume] [--force-stage FORCE_STAGE] [--gpu GPU]
+                       [--enable-seedvr2 | --disable-seedvr2] [--agent-mock]
+                       [--dry-run]
+
+Resumable P_PIPE1 garden pipeline: image or natural-language input.
+
+options:
+  -h, --help            show this help message and exit
+  --input-topdown INPUT_TOPDOWN, --input INPUT_TOPDOWN
+                        existing topdown image (legacy --input alias)
+  --scene-prompt SCENE_PROMPT
+                        natural-language garden scene description
+  --config CONFIG
+  --output OUTPUT
+  --start-stage START_STAGE
+  --stop-stage STOP_STAGE
+  --resume
+  --force-stage FORCE_STAGE
+  --gpu GPU
+  --enable-seedvr2
+  --disable-seedvr2
+  --agent-mock          select the external Agent2Topdown mock, if supported
+  --dry-run             validate configuration and print planned stages
+                        without running models

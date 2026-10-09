@@ -1,0 +1,138 @@
+name: natural_language_3d_video_pipeline
+project_root: ..
+pipeline_version: P_RELEASE1
+input:
+  mode: text
+  default_topdown: ${TOPDOWN_IMAGE}
+total_frames: 61
+fps: 24
+proxy_resolution: [896, 512]
+fixanything_resolution: [832, 480]
+temporal_resampling: false
+up_axis: ${SCENE_UP_AXIS}
+agent2topdown:
+  enabled: true
+  mode: deepseek_api
+  root: ${AGENT2TOPDOWN_ROOT}
+  model: ${AGENT2TOPDOWN_MODEL}
+  base_url: ${DEEPSEEK_BASE_URL}
+  api_key_env: DEEPSEEK_API_KEY
+  mock: false
+flux_topdown:
+  enabled: true
+  model_id: black-forest-labs/FLUX.2-klein-4B
+  model_source: ModelScope local weights
+  model_dir: ${FLUX_MODEL_PATH}
+  python: ${FLUX_PYTHON}
+  pythonpath: ${FLUX_PYTHONPATH}
+  script: pipeline/integrations/run_flux_topdown.py
+  seeds: [0, 1, 2, 3]
+  num_inference_steps: 4
+  border_px: 64
+  visual_review_required: true
+seedvr2:
+  enabled: false
+  model_id: bytedance-community/SeedVR2-3B
+  repo: ${SEEDVR2_ROOT}
+  repo_commit: ${SEEDVR2_COMMIT}
+  python: ${SEEDVR2_PYTHON}
+  scripts_root: ${SEEDVR2_SCRIPTS_ROOT}
+  script: ${SEEDVR2_INFERENCE_SCRIPT}
+  weights: ${SEEDVR2_MODEL_PATH}
+  vae_weights: ${SEEDVR2_VAE_PATH}
+  scale: 2
+  res_h: 960
+  res_w: 1664
+  precision: bfloat16
+  seed: 666
+  sampling_steps: 1
+  cfg_scale: 1.0
+  cfg_rescale: 0.0
+  sp_size: 1
+  nproc_per_node: 1
+  preserve_fps: true
+  preserve_frame_count: true
+  temporal_resampling: false
+paths:
+  input_copy: "{output}/00_input/input.png"
+  input_manifest: "{output}/audit/input_manifest.json"
+  triposplat_dir: "{output}/01_triposplat"
+  ply: "{output}/01_triposplat/raw_scene.ply"
+  triposplat_manifest: "{output}/01_triposplat/inference_manifest.json"
+  preprocessing_trace: "{output}/01_triposplat/input_preprocessing_trace.json"
+  camera_dir: "{output}/02_camera"
+  trajectory: "{output}/02_camera/selected_cameras_world_c2w.json"
+  camera_report: "{output}/02_camera/report.json"
+  proxy_dir: "{output}/03_proxy"
+  proxy_frames: "{output}/03_proxy/frames"
+  proxy_video: "{output}/03_proxy/selected_proxy.mp4"
+  proxy_report: "{output}/03_proxy/pipeline_proxy_manifest.json"
+  proxy_contact: "{output}/03_proxy/contact_sheet.png"
+  topdown: "${TOPDOWN_IMAGE}"
+  anchor_dir: "{output}/04_flux/anchors"
+  anchor000: "{output}/04_flux/anchors/clean_000.png"
+  anchor060: "{output}/04_flux/anchors/clean_060.png"
+  alignment: "{output}/04_flux/anchor_alignment.json"
+  anchor_report: "{output}/04_flux/report.json"
+  fa_input: "{output}/05_fixanything/inputs"
+  fa_input_manifest: "{output}/05_fixanything/audit/input_resize_manifest.json"
+  anchor_provenance: "{output}/05_fixanything/audit/anchor_provenance.json"
+  fa_video: "{output}/05_fixanything/outputs/generated_61f.mp4"
+  fa_frames: "{output}/05_fixanything/outputs/frames"
+  fa_report: "{output}/05_fixanything/audit/fixanything_report.json"
+  final_report: "{output}/report.json"
+  summary: "{output}/summary.md"
+  comparison_sheet: "{output}/06_comparisons/contact_sheet.png"
+  comparison_video: "{output}/06_comparisons/proxy_vs_fixanything.mp4"
+  model_registry: "{output}/audit/model_registry.json"
+stages:
+  triposplat:
+    python: ${TRIPOSPLAT_PYTHON}
+    snapshot: ${TRIPOSPLAT_SNAPSHOT}
+    checkpoint_root: ${TRIPOSPLAT_CKPT_ROOT}
+    pythonpath: ${TRIPOSPLAT_PYTHONPATH}
+    seed: 420042
+    steps: 20
+    guidance_scale: 3.0
+    shift: 3.0
+    num_gaussians: 262144
+  camera:
+    python: ${CAMERA_PYTHON}
+    up_axis: ${SCENE_UP_AXIS}
+    gsplat_cuda_extension: ${GSPLAT_CUDA_EXTENSION}
+    frames: 61
+    native: true
+    require_collision_free: true
+  proxy:
+    python: ${PROXY_PYTHON}
+    gsplat_cuda_extension: ${GSPLAT_CUDA_EXTENSION}
+    fps: 24
+    resolution: [896, 512]
+  flux_anchor:
+    python: ${FLUX_PYTHON}
+    pythonpath: ${FLUX_PYTHONPATH}
+    model_dir: ${FLUX_MODEL_PATH}
+    model_id: black-forest-labs/FLUX.2-klein-4B
+    source: ModelScope-local
+    distilled: true
+    steps: 4
+    seeds: [0, 1, 2, 3]
+    endpoint_indices: [0, 60]
+    foreground_prompt: configs/prompts/flux_foreground.txt
+    background_prompt: configs/prompts/flux_background.txt
+    visual_geometry_review_required: true
+  fixanything:
+    python: ${FIXANYTHING_PYTHON}
+    repo: ${FIXANYTHING_ROOT}
+    diffsynth_root: ${FIXANYTHING_DIFFSYNTH_ROOT}
+    model_dir: ${FIXANYTHING_MODEL_PATH}
+    lora_path: ${FIXANYTHING_LORA_PATH}
+    commit: ${FIXANYTHING_COMMIT}
+    seed: 1
+    steps: 10
+    cfg: 5.0
+    tiled: true
+    num_repeat_last: 4
+    clean_frame_indices: [0, 60]
+    resize_policy: "cover-center bilinear"
+    gpu: auto

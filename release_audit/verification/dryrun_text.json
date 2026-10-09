@@ -1,0 +1,29 @@
+{
+  "DRY_RUN": true,
+  "INPUT_MODE": "text",
+  "INPUT": null,
+  "SCENE_PROMPT": "A test garden",
+  "CONFIG": "<RELEASE_ROOT>/configs/default.yaml",
+  "PROJECT_ROOT": "<RELEASE_ROOT>",
+  "OUTPUT": "<OUTPUT_ROOT>",
+  "PLANNED_STAGES": [
+    "agent2topdown",
+    "flux_topdown",
+    "input",
+    "triposplat",
+    "camera",
+    "proxy",
+    "flux_anchor",
+    "fixanything",
+    "seedvr2",
+    "report"
+  ],
+  "NATIVE_FRAMES": 61,
+  "TEMPORAL_RESAMPLING": false,
+  "CLEAN_FRAME_INDICES": [
+    0,
+    60
+  ],
+  "SEEDVR2_ENABLED": false,
+  "MODEL_EXECUTION": false
+}

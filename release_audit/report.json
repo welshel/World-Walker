@@ -1,0 +1,43 @@
+{
+  "FINAL_STATUS": "P_RELEASE0_PARTIAL_GITHUB_PACKAGING",
+  "RELEASE_ROOT": "P_RELEASE0_REFERENCE",
+  "SOURCE_FILES_INCLUDED": 22,
+  "EXTRACTED_PROMPT_ASSETS_INCLUDED": 2,
+  "THIRD_PARTY_FILES_INCLUDED": 0,
+  "SECRET_SCAN": "PASS",
+  "LARGE_FILE_SCAN": "PASS",
+  "ABSOLUTE_PATH_SCAN": "PASS",
+  "SYMLINK_SCAN": "PASS",
+  "LICENSE_AUDIT": "UNKNOWN",
+  "MODEL_WEIGHTS_INCLUDED": false,
+  "PRIVATE_DATA_INCLUDED": false,
+  "EXPERIMENT_OUTPUT_INCLUDED": false,
+  "SEEDVR2_DEFAULT_FALSE": true,
+  "TEXT_INPUT_SUPPORTED": true,
+  "TOPDOWN_INPUT_SUPPORTED": true,
+  "CLI_SMOKE": "PASS",
+  "CONFIG_SMOKE": "PASS",
+  "COMPILE_SMOKE": "PASS",
+  "IMPORT_SMOKE": "PASS",
+  "CACHE_FINGERPRINT_SMOKE": "PASS",
+  "PORTABLE_PATH_TEST": "PASS",
+  "UNIT_TESTS": "PASS",
+  "UNIT_TEST_COUNT": 16,
+  "ENVIRONMENT_PREFLIGHT": "WARN",
+  "REPO_SIZE_MB": 0.465,
+  "FILE_COUNT": 69,
+  "PROJECT_LICENSE_READY": "NO",
+  "READY_FOR_GITHUB": "PARTIAL",
+  "BLOCKERS": [
+    "Project license must be selected; LICENSE_SELECTION_REQUIRED.md is present.",
+    "Third-party model/repository licenses were not independently verified; see third_party_licenses.md.",
+    "The release keeps camera planning/rendering and endpoint anchor generation/alignment as external interfaces; P_PIPE1 natural-language mode used mock fallback, so a live text-to-video end-to-end path remains unverified."
+  ],
+  "NOTES": [
+    "No model was loaded and no GPU inference was run.",
+    "No GitHub login, remote, push, or upload was performed.",
+    "External model weights, private scene data, experiment videos, and PLY files are excluded."
+  ],
+  "LOCAL_GIT_INITIALIZED": true,
+  "REMOTE_CONFIGURED": false
+}

@@ -1,0 +1,18 @@
+{
+  "python": "3.11.15",
+  "compileall": "PASS",
+  "import_smoke": "PASS",
+  "cli_help": "PASS",
+  "config_load": "PASS",
+  "text_cli_dry_run": "PASS",
+  "topdown_cli_dry_run": "PASS",
+  "input_modes_mutually_exclusive": "PASS",
+  "seedvr2_default_false": "PASS",
+  "cache_fingerprint_tests": "PASS",
+  "unittest": "PASS",
+  "unittest_count": 16,
+  "portable_path_test": "PASS",
+  "environment_preflight": "WARN",
+  "model_execution": false,
+  "gpu_inference": false
+}
