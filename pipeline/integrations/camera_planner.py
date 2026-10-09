@@ -10,7 +10,7 @@ def validate_environment(config):
     if str(config.get("up_axis","-Y")) not in ("+X","-X","+Y","-Y","+Z","-Z"):raise ValueError("camera up_axis must be an explicit signed axis")
 
 def build_command(config,ply_path,output_dir,repo_root):
-    return [str(config["python"]),"-m","pipeline.camera.planner","--ply",str(ply_path),"--output-dir",str(output_dir),"--up-axis",str(config.get("up_axis","-Y"))]
+    return [str(config["python"]),"-m","pipeline.camera.planner","--ply",str(ply_path),"--output-dir",str(output_dir),"--up-axis=" + str(config.get("up_axis","-Y"))]
 
 def run(config,ply_path,output_dir,report_path,trajectory_path,log_path,gpu,repo_root):
     validate_environment(config)

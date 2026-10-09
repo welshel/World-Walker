@@ -47,6 +47,14 @@ class ReleaseOneConfigTests(unittest.TestCase):
             self.assertTrue(callable(adapter.build_command))
             self.assertTrue(callable(adapter.collect_outputs))
 
+    def test_camera_builder_keeps_negative_axis_as_one_cli_argument(self):
+        command = camera_planner.build_command(
+            {"python": "python", "up_axis": "-Y"},
+            Path("scene.ply"), Path("camera_out"), ROOT,
+        )
+        self.assertIn("--up-axis=-Y", command)
+        self.assertNotIn("-Y", command)
+
     def test_real_agent_provider_requires_configured_root_and_key(self):
         self.assertEqual(provider_check("${AGENT2TOPDOWN_ROOT}", False)["reason"], "AGENT2TOPDOWN_PROVIDER_NOT_CONFIGURED")
         self.assertEqual(provider_check(ROOT / "pipeline/agent2topdown_backend", False)["status"], "FAIL")
