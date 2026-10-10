@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "natural-language-3d-video-pipeline"
+name = "world-walker"
 version = "0.1.0"
-description = "Research prototype for camera-controlled 3D-consistent scene video generation"
+description = "Research pipeline for camera-controlled scene video using an explicit 3D proxy"
 requires-python = ">=3.10"
 dependencies = ["PyYAML>=6.0", "Pillow>=10.0", "imageio>=2.31", "imageio-ffmpeg>=0.4.9", "requests>=2.31"]
 

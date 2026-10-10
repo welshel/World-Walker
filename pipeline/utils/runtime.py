@@ -12,6 +12,7 @@ LEGACY_STAGES = ['input','triposplat','camera','proxy','flux_anchor','fixanythin
 STAGES = LEGACY_STAGES
 EXECUTION_ORDER = ['agent2topdown','flux_topdown','input','triposplat','camera','proxy','flux_anchor','fixanything','seedvr2','report']
 LEGACY_NUMERIC_STAGES = {str(i): name for i, name in enumerate(LEGACY_STAGES)}
+LEGACY_CACHE_COMPATIBLE_STAGES = set(LEGACY_STAGES) - {'flux_anchor', 'fixanything', 'report'}
 STAGE_ALIASES = {'agent': 'agent2topdown', 'topdown': 'flux_topdown', 'flux_topdown': 'flux_topdown', 'flux': 'flux_anchor', 'fix': 'fixanything'}
 PATH_KEYS = {
     'agent2topdown': ('agent_generated_topdown','agent_manifest'),
@@ -65,6 +66,36 @@ def load_json(p): return json.loads(Path(p).read_text())
 def atomic_json(p,d):
     p=Path(p); p.parent.mkdir(parents=True,exist_ok=True); t=p.with_suffix(p.suffix+'.tmp'); t.write_text(json.dumps(d,indent=2,ensure_ascii=False)+'\n'); t.replace(p)
 def canonical_hash(d): return hashlib.sha256(json.dumps(d,sort_keys=True,default=str,separators=(',',':')).encode()).hexdigest()
+
+def anchor_alignment_policy(alignment, allow_fail=False):
+    values = {
+        'ANCHOR000_ALIGNMENT': alignment.get('ANCHOR000_ALIGNMENT'),
+        'ANCHOR060_ALIGNMENT': alignment.get('ANCHOR060_ALIGNMENT'),
+    }
+    failed = any(value not in ('GOOD', 'PARTIAL') for value in values.values())
+    override_used = bool(failed and allow_fail)
+    if failed and not allow_fail:
+        rendered = ', '.join(f"{key}={value or 'MISSING'}" for key, value in values.items())
+        raise RuntimeError(
+            f"FixAnything blocked by anchor alignment FAIL ({rendered}); "
+            "inspect the anchor/proxy comparison and explicitly opt in to continue"
+        )
+    warnings = []
+    if failed:
+        warnings.append(
+            "WARNING:\nFLUX clean anchor failed automatic alignment audit.\n"
+            "Continuing because explicit override was enabled."
+        )
+    elif any(value == 'PARTIAL' for value in values.values()):
+        rendered = ', '.join(f"{key}={value}" for key, value in values.items())
+        warnings.append(
+            f"WARNING: FLUX clean anchor alignment audit is PARTIAL ({rendered}); continuing."
+        )
+    return {
+        **values,
+        'ANCHOR_ALIGNMENT_OVERRIDE_USED': override_used,
+        'warnings': warnings,
+    }
 
 def stage_files(name,p):
     m={
@@ -146,8 +177,13 @@ def stage_config(cfg,name):
         seed=cfg.get('seedvr2',{})
         stage={k:v for k,v in seed.items() if k!='enabled'}
         global_config={'model_identity':cfg.get('_seedvr2_identity')}
+    if name in ('flux_anchor', 'fixanything', 'report'):
+        global_config['anchor_alignment_allow_fail'] = bool(
+            cfg.get('_anchor_alignment_allow_fail',
+                    cfg.get('flux', {}).get('anchor_alignment', {}).get('allow_fail', False))
+        )
     if name=='report':
-        global_config={'input_mode':cfg.get('_input_mode'),'seedvr2_enabled':bool(cfg.get('_seedvr2_enabled',False))}
+        global_config.update({'input_mode':cfg.get('_input_mode'),'seedvr2_enabled':bool(cfg.get('_seedvr2_enabled',False))})
     return canonical_hash({'global':global_config,'paths':selected_paths,'stage':stage})
 
 def legacy_stage_config(cfg,name):
@@ -381,13 +417,17 @@ def stage_run(name,cfg,base,project,preferred_gpu='auto',force=False):
             details.update(run_flux(fl_cfg,p['proxy_frames'],p['topdown'],p['anchor_dir'],p['anchor_report'],p['alignment'],base/'logs/stage_flux_anchor.log',gpu,Path(__file__).resolve().parents[2],p['anchor_dir'].parent))
         rep=load_json(p['anchor_report']); alignment=load_json(p['alignment'])
         if not p['anchor000'].is_file() or not p['anchor060'].is_file(): raise RuntimeError('clean anchors missing')
-        if alignment.get('ANCHOR000_ALIGNMENT') not in ('GOOD','PARTIAL') or alignment.get('ANCHOR060_ALIGNMENT') not in ('GOOD','PARTIAL'):
-            raise RuntimeError('clean anchor geometry audit failed; FixAnything blocked')
-        details.update(model_id=rep.get('MODEL_ID'),model_source=rep.get('MODEL_SOURCE'),steps=rep.get('NUM_INFERENCE_STEPS'),stage_a_seed={k:v.get('stage_a_selected_seed') for k,v in rep.get('endpoints',{}).items()},stage_b_seed={k:v.get('stage_b_selected_seed') for k,v in rep.get('endpoints',{}).items()},alignment=alignment.get('ALIGNMENT_STATUS'))
+        policy=anchor_alignment_policy(alignment, bool(cfg.get('_anchor_alignment_allow_fail', False)))
+        for warning in policy['warnings']:
+            print(warning, file=sys.stderr)
+        details.update(policy,model_id=rep.get('MODEL_ID'),model_source=rep.get('MODEL_SOURCE'),steps=rep.get('NUM_INFERENCE_STEPS'),stage_a_seed={k:v.get('stage_a_selected_seed') for k,v in rep.get('endpoints',{}).items()},stage_b_seed={k:v.get('stage_b_selected_seed') for k,v in rep.get('endpoints',{}).items()},alignment=alignment.get('ALIGNMENT_STATUS'))
     elif name=='fixanything':
         if not p['alignment'].is_file(): raise RuntimeError('FixAnything blocked: anchor alignment audit missing')
         audit=load_json(p['alignment'])
-        if any(audit.get(k) not in ('GOOD','PARTIAL') for k in ('ANCHOR000_ALIGNMENT','ANCHOR060_ALIGNMENT')): raise RuntimeError('FixAnything blocked by anchor geometry FAIL')
+        policy=anchor_alignment_policy(audit, bool(cfg.get('_anchor_alignment_allow_fail', False)))
+        for warning in policy['warnings']:
+            print(warning, file=sys.stderr)
+        details.update(policy)
         from pipeline.integrations.fixanything import prepare_inputs,run as run_fixanything
         mf_path=p['fa_input_manifest'];prov_path=p['anchor_provenance']
         if not mf_path.is_file() or not prov_path.is_file() or force:
@@ -480,9 +520,17 @@ def stage_run(name,cfg,base,project,preferred_gpu='auto',force=False):
           'comparison_contact_sheet':p['comparison_sheet'],'proxy_vs_fixanything_video':p['comparison_video'],
           'model_registry':p['model_registry'],'model_weight_hash_manifest':p['weight_hash_manifest']}
         artifact_hashes={key:artifact_record(path) for key,path in artifacts.items()}
-        complete=fa.get('status') in ('SUCCESS','PASS') and align.get('ANCHOR000_ALIGNMENT') in ('GOOD','PARTIAL') and align.get('ANCHOR060_ALIGNMENT') in ('GOOD','PARTIAL')
+        alignment_policy=anchor_alignment_policy(align, bool(cfg.get('_anchor_alignment_allow_fail', False)))
+        complete=fa.get('status') in ('SUCCESS','PASS') and (
+            all(alignment_policy[key] in ('GOOD','PARTIAL') for key in ('ANCHOR000_ALIGNMENT','ANCHOR060_ALIGNMENT'))
+            or alignment_policy['ANCHOR_ALIGNMENT_OVERRIDE_USED']
+        )
         report={
-          'FINAL_STATUS':'P_PIPE0_PASS_TOPDOWN_TO_FIXANYTHING_END_TO_END' if complete else 'P_PIPE0_PARTIAL_END_TO_END',
+          'FINAL_STATUS':('P_PIPE0_PARTIAL_ANCHOR_ALIGNMENT_OVERRIDE' if complete and alignment_policy['ANCHOR_ALIGNMENT_OVERRIDE_USED']
+                          else 'P_PIPE0_PASS_TOPDOWN_TO_FIXANYTHING_END_TO_END' if complete
+                          else 'P_PIPE0_PARTIAL_END_TO_END'),
+          'ANCHOR_ALIGNMENT_OVERRIDE_USED':alignment_policy['ANCHOR_ALIGNMENT_OVERRIDE_USED'],
+          'ANCHOR_ALIGNMENT_POLICY':{k:v for k,v in alignment_policy.items() if k!='warnings'},
           'INPUT_IMAGE':str(inp),'INPUT_SHA256':sha256_file(inp),'INPUT_SIZE':image_info(inp).get('size'),'INPUT_MODE':image_info(inp).get('mode'),
           'TRIPOSPLAT_STATUS':'PASS','TRIPOSPLAT_PLY':str(p['ply']),'TRIPOSPLAT_PLY_SHA256':sha256_file(p['ply']),'TRIPOSPLAT_GAUSSIAN_COUNT':tri.get('num_gaussians'),
           'UP_AXIS':'-Y','TRAJECTORY_STATUS':'PASS','SELECTED_TRAJECTORY':str(p['trajectory']),'SELECTED_TRAJECTORY_SHA256':sha256_file(p['trajectory']),'SELECTED_CAMERA_CANDIDATE':cam.get('selected_candidate'),'TOTAL_CAMERA_FRAMES':61,'TEMPORAL_RESAMPLING':False,
@@ -491,12 +539,12 @@ def stage_run(name,cfg,base,project,preferred_gpu='auto',force=False):
           'FLUX_MODEL':flux.get('MODEL_ID'),'FLUX_MODEL_SOURCE':flux.get('MODEL_SOURCE'),'FLUX_MODEL_PATH':flux.get('MODEL_PATH'),'FLUX_DISTILLED':flux.get('DISTILLED'),'FLUX_STEPS':flux.get('NUM_INFERENCE_STEPS'),'ANCHOR000_FOREGROUND_SEED':flux.get('STAGE_A_SEED_USED'),'ANCHOR000_BACKGROUND_SEED':flux.get('STAGE_B_SEED_USED'),'ANCHOR060_FOREGROUND_SEED':flux.get('STAGE_A_SEED_USED'),'ANCHOR060_BACKGROUND_SEED':flux.get('STAGE_B_SEED_USED'),
           'ANCHOR000_SHA256':sha256_file(p['anchor000']),'ANCHOR060_SHA256':sha256_file(p['anchor060']),'ANCHOR000_ALIGNMENT':align.get('ANCHOR000_ALIGNMENT'),'ANCHOR060_ALIGNMENT':align.get('ANCHOR060_ALIGNMENT'),
           'FIXANYTHING_STATUS':fa.get('status'),'FIXANYTHING_INPUT_FRAMES':fa.get('input_frames'),'FIXANYTHING_OUTPUT_FRAMES':fa.get('output_frames'),'FIXANYTHING_RESOLUTION':fa.get('resolution'),'FIXANYTHING_FPS':fa.get('fps'),'FIXANYTHING_SEED':fa.get('seed'),'FIXANYTHING_CLEAN_FRAME_INDICES':fa.get('clean_frame_indices'),'FIXANYTHING_TEMPORAL_RESAMPLING':fa.get('temporal_resampling'),'FIXANYTHING_INTERNAL_REPEAT_LAST':fa.get('num_repeat_last'),
-          'END_TO_END_PIPELINE':'PASS' if complete else 'PARTIAL','READY_FOR_REUSABLE_PIPELINE':'YES' if complete else 'PARTIAL','CURRENT_BOTTLENECK':None,'NEXT_STEP_RECOMMENDED':'Optional future SeedVR2 stage must be separately requested; not run in this pipeline.',
+          'END_TO_END_PIPELINE':'PARTIAL_ALIGNMENT_OVERRIDE' if alignment_policy['ANCHOR_ALIGNMENT_OVERRIDE_USED'] else 'PASS' if complete else 'PARTIAL','READY_FOR_REUSABLE_PIPELINE':'PARTIAL' if alignment_policy['ANCHOR_ALIGNMENT_OVERRIDE_USED'] else 'YES' if complete else 'PARTIAL','CURRENT_BOTTLENECK':None,'NEXT_STEP_RECOMMENDED':'Review FixAnything output geometry after the explicit anchor-alignment override before proceeding.' if alignment_policy['ANCHOR_ALIGNMENT_OVERRIDE_USED'] else 'Optional future SeedVR2 stage must be separately requested; not run in this pipeline.',
           'OUTPUT_VIDEO':str(p['fa_video']),'OUTPUT_VIDEO_SHA256':sha256_file(p['fa_video']),'FIXANYTHING_PEAK_MEMORY_GIB':fa.get('peak_memory_gib'),'FIXANYTHING_RUNTIME_SEC':fa.get('total_seconds'),'GPU':fa.get('gpu'),
           'STAGE_GPU':stage_gpu,'STAGE_TIMINGS':stage_timings,
           'MODEL_REGISTRY':str(p['model_registry']),'MODEL_REGISTRY_SHA256':sha256_file(p['model_registry']),'MODEL_WEIGHT_HASH_MANIFEST':str(p['weight_hash_manifest']),'MODEL_WEIGHT_HASH_MANIFEST_SHA256':sha256_file(p['weight_hash_manifest']),'MODEL_WEIGHT_FILE_COUNT':len(weight_manifest.get('weights',{})),
           'OUTPUT_ARTIFACT_SHA256':artifact_hashes,
-          'WARNINGS':['Previous FixAnything start in system Python failed before inference due missing sentencepiece; the final successful run used the recorded compatible environment.','Original camera planning and proxy render GPU identifiers and wall runtimes were not retained; these values are reported as unavailable rather than inferred.','FixAnything/Wan full model SHA256 values are read from the checkpoint download manifest; file sizes were checked against the manifest, while TripoSplat and FLUX weights were rehashed during this audit.']}
+          'WARNINGS':alignment_policy['warnings'] + ['Previous FixAnything start in system Python failed before inference due missing sentencepiece; the final successful run used the recorded compatible environment.','Original camera planning and proxy render GPU identifiers and wall runtimes were not retained; these values are reported as unavailable rather than inferred.','FixAnything/Wan full model SHA256 values are read from the checkpoint download manifest; file sizes were checked against the manifest, while TripoSplat and FLUX weights were rehashed during this audit.']}
         seed_status=load_json(p['seedvr2_status']).get('status','NOT_RUN') if p['seedvr2_status'].is_file() else 'NOT_RUN'
         seed_manifest=load_json(p['seedvr2_manifest']) if p['seedvr2_manifest'].is_file() else {}
         seed_enabled=bool(cfg.get('_seedvr2_enabled',False))
@@ -546,8 +594,9 @@ def stage_run(name,cfg,base,project,preferred_gpu='auto',force=False):
         stage_timings['report']['elapsed_sec']=round(time.monotonic()-report_build_start,3)
         atomic_json(p['final_report'],report)
         summary_lines=[
-          '# P_PIPE0 end-to-end garden smoke','',
+          '# World-Walker pipeline run','',
           f"**FINAL_STATUS = {report['FINAL_STATUS']}**",'',
+          f"Anchor alignment override used: {report['ANCHOR_ALIGNMENT_OVERRIDE_USED']}.",'',
           f"Input `garden_topdown.png` SHA256: `{report['INPUT_SHA256']}`. The official TripoSplat run generated {tri.get('num_gaussians')} Gaussians (seed {tri.get('seed')}, {tri.get('steps')} steps); native 61-pose camera path and 61-frame proxy passed the recorded safety and format gates.",'',
           f"The ModelScope-local {flux.get('MODEL_ID')} Distilled {flux.get('NUM_INFERENCE_STEPS')}-step anchors used Stage A seed {chosen_a} and Stage B seed {chosen_b}. The saved visual review reports geometry preservation as `{align.get('GEOMETRY_PRESERVATION')}` with both endpoints `{align.get('ANCHOR000_ALIGNMENT')}` / `{align.get('ANCHOR060_ALIGNMENT')}`.",'',
           f"FixAnything produced {fa.get('output_frames')} frames at {fa.get('resolution')} using clean indices `{fa.get('clean_frame_indices')}`, seed {fa.get('seed')}, {fa.get('steps')} steps, CFG {fa.get('cfg')}, tiled inference, and physical GPU {run_config.get('gpu_physical_index')}. Reported runtime: {fa.get('total_seconds')} sec ({fa.get('pipeline_seconds')} sec pipeline + {fa.get('inference_seconds')} sec inference); peak memory {fa.get('peak_memory_gib')} GiB. Internal repeat-last was {fa.get('num_repeat_last')} frames; final output remains 61 frames and source frames were not temporally resampled.",'',
@@ -564,7 +613,7 @@ def stage_run(name,cfg,base,project,preferred_gpu='auto',force=False):
           'See `report.json`, `audit/model_registry.json`, `audit/model_weight_hashes.json`, `04_flux/anchor_alignment.json`, and `06_comparisons/contact_sheet.png`.',''
         ]
         p['summary'].write_text('\n'.join(summary_lines))
-        details.update(final_status=report['FINAL_STATUS'],frames=fa.get('output_frames'),weight_file_count=len(weight_manifest.get('weights',{})))
+        details.update(final_status=report['FINAL_STATUS'],frames=fa.get('output_frames'),weight_file_count=len(weight_manifest.get('weights',{})),ANCHOR_ALIGNMENT_OVERRIDE_USED=alignment_policy['ANCHOR_ALIGNMENT_OVERRIDE_USED'])
     details['ended_unix']=time.time()
     return details
 
@@ -572,7 +621,7 @@ def selected_metric(cam,key):
     c=next((x for x in cam.get('candidates',[]) if x.get('id')==cam.get('selected_candidate')),{})
     return c.get(key)
 
-def run_one(name,config,output,input_override=None,resume=False,force=False,gpu='auto',input_mode=None,scene_prompt=None,seedvr2_enabled=None,agent_mock=False):
+def run_one(name,config,output,input_override=None,resume=False,force=False,gpu='auto',input_mode=None,scene_prompt=None,seedvr2_enabled=None,agent_mock=False,allow_anchor_alignment_fail=None):
     config_path = Path(config).expanduser().resolve()
     cfg = load_config(config_path)
     project_root = Path(cfg.get('project_root', '.')).expanduser()
@@ -586,6 +635,7 @@ def run_one(name,config,output,input_override=None,resume=False,force=False,gpu=
     cfg['_scene_prompt']=scene_prompt
     cfg['_input_override']=input_override
     cfg['_seedvr2_enabled']=bool(cfg.get('seedvr2',{}).get('enabled',False) if seedvr2_enabled is None else seedvr2_enabled)
+    cfg['_anchor_alignment_allow_fail']=bool(cfg.get('flux',{}).get('anchor_alignment',{}).get('allow_fail',False) or allow_anchor_alignment_fail is True)
     if agent_mock: raise RuntimeError('MOCK_FALLBACK_FORBIDDEN: mock providers are test-only')
     p=paths(cfg,base,project)
     cfg['_agent_root']=str(p['agent_root'])
@@ -633,7 +683,7 @@ def run_one(name,config,output,input_override=None,resume=False,force=False,gpu=
         expected={str(x) for x in stage_files(name,p)}
         hashes_valid=(set(outputs)==expected and all(Path(k).exists() and sha256_path(k)==v for k,v in outputs.items()))
         config_valid=old.get('config_sha256')==ch
-        if not config_valid and mode=='image' and name in LEGACY_STAGES:
+        if not config_valid and mode=='image' and name in LEGACY_CACHE_COMPATIBLE_STAGES:
             config_valid=old.get('config_sha256')==legacy_stage_config(cfg,name)
         if old.get('status')=='PASS' and config_valid and old.get('input_hashes')==inputs and hashes_valid:
             atomic_json(status,{'stage':name,'status':'CACHED','timestamp':time.time(),'manifest':str(manifest)})
@@ -664,5 +714,5 @@ def run_one(name,config,output,input_override=None,resume=False,force=False,gpu=
 
 def stage_cli(name):
     import argparse
-    a=argparse.ArgumentParser(); a.add_argument('--config',required=True); a.add_argument('--output',required=True); a.add_argument('--input'); a.add_argument('--resume',action='store_true'); a.add_argument('--force',action='store_true'); a.add_argument('--gpu',default='auto')
-    q=a.parse_args(); print(json.dumps(run_one(name,q.config,q.output,q.input,q.resume,q.force,q.gpu),indent=2,default=str))
+    a=argparse.ArgumentParser(); a.add_argument('--config',required=True); a.add_argument('--output',required=True); a.add_argument('--input'); a.add_argument('--resume',action='store_true'); a.add_argument('--force',action='store_true'); a.add_argument('--gpu',default='auto'); a.add_argument('--allow-anchor-alignment-fail',action='store_true')
+    q=a.parse_args(); print(json.dumps(run_one(name,q.config,q.output,q.input,q.resume,q.force,q.gpu,allow_anchor_alignment_fail=q.allow_anchor_alignment_fail),indent=2,default=str))

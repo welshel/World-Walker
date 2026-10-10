@@ -1,114 +1,146 @@
-# Natural Language to 3D Video Pipeline
+# World-Walker
 
-Research prototype for generating camera-controlled 3D scene videos from a natural-language description or a top-down layout image. This is a research prototype, not production-ready software.
+World-Walker is a research pipeline that turns a natural-language scene description or a top-down layout into a camera-controlled video through explicit 3D proxy reconstruction and video refinement.
 
-## Supported input modes
+![World-Walker example: proxy and refined frames](docs/assets/teaser.webp)
 
-A. `Natural language → Agent2Topdown → FLUX top-down refinement → TripoSplat → camera-controlled video`
+*Example output from a validated pipeline run. Rows show frames 000, 015, 030, 045, and 060; the historical run is not the P_RELEASE1 fresh-clone E2E.*
 
-B. `Top-down image → TripoSplat → camera-controlled video`
+## Pipeline
 
-The shared video pipeline plans a native 61-frame camera path, renders a proxy, creates two FLUX.2 Klein endpoint anchors, and propagates them with FixAnything. SeedVR2 is optional and disabled by default.
+~~~mermaid
+flowchart TD
+    P["Natural-language prompt"] --> A["Agent2Topdown"]
+    A --> L["Generated layout"]
+    I["Top-down image"] --> T["TripoSplat"]
+    L --> F["FLUX.2 Klein refinement"]
+    F --> V
+    V --> T["TripoSplat"]
+    T --> G["Gaussian 3D proxy"]
+    G --> C["Automatic camera planning"]
+    C --> R["Native 61-frame proxy video"]
+    R --> X["FLUX endpoint refinement"]
+    X --> Q["FixAnything temporal propagation"]
+    Q --> O["Camera-controlled video"]
+    O -. optional .-> S["SeedVR2 spatial super-resolution"]
+~~~
 
-```text
-Natural language or top-down image
-  → Agent2Topdown (text mode only)
-  → FLUX.2 Klein top-down refinement (text mode only)
-  → TripoSplat Gaussian PLY
-  → automatic camera planner
-  → native 61-frame proxy
-  → FLUX endpoint anchors at frames 0 and 60
-  → FixAnything 61-frame video
-  → [optional SeedVR2]
-```
+World-Walker has two inputs: natural-language scene planning and a direct top-down image. Text mode generates a layout and refines it with FLUX.2 Klein, then pauses for a strict top-down visual review. Image mode starts from a supplied layout.
 
-## Requirements
+## Features
 
-- Python 3.10 or newer for the orchestration package.
-- `ffmpeg` on `PATH`.
-- Separate compatible Python environments for TripoSplat, camera/proxy rendering, FLUX, FixAnything, and SeedVR2. Their CUDA and PyTorch requirements differ, so the project does not combine them into one environment.
-- External repositories and model weights listed in [docs/installation.md](docs/installation.md). They are not included here.
-- A DeepSeek API key for natural-language mode. The real provider is required; mock output is never accepted by the formal CLI.
+- Natural-language scene planning and direct top-down image input
+- Feed-forward single-image Gaussian scene reconstruction
+- Automatic low-altitude camera trajectory planning with collision checks
+- Native 61-frame proxy compatible with the current FixAnything path
+- FLUX clean-anchor refinement and endpoint alignment audit
+- FixAnything temporal propagation
+- Optional SeedVR2 super-resolution, disabled by default
+- Stage-level caching, provenance manifests, and <code>--resume</code>
+- Modular adapters for external repositories and stage-specific Python environments
+
+The pipeline uses an explicit 3D proxy to guide camera-controlled video generation and is designed to improve scene-level spatial consistency. It does not guarantee exact geometry or long-range 3D consistency.
+
+## Example
+
+Input description: “A formal garden with a glass greenhouse, a central fountain, wooden benches, flower beds, stone paths, grass, shrubs, and surrounding trees.”
+
+The teaser above compares five raw proxy frames with their FixAnything output from a validated historical run. It is a real pipeline example, not a claim about the P_RELEASE1 fresh-clone E2E.
 
 ## Quick start
 
-### 1. Install orchestration
+### Install the orchestration package
 
-```bash
-git clone <your-repository-url>
-cd natural-language-3d-video-pipeline
+~~~bash
+git clone https://github.com/welshel/World-Walker.git
+cd World-Walker
 python3.10 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -e .
 cp .env.example .env
-```
+~~~
 
-### 2. Configure external components
+Configure external repositories, compatible stage-specific Python environments, model paths, and (for text mode) the API credential in your local <code>.env</code>. See [Installation](docs/installation.md). World-Walker does not download model weights automatically.
 
-Fill `.env` with the stage-specific interpreter, repository, checkpoint and model paths described in [docs/installation.md](docs/installation.md). Set `SCENE_UP_AXIS` explicitly for the input scene. Put `DEEPSEEK_API_KEY` in the local `.env`; do not commit it.
+Check the selected input mode and required dependencies before inference:
 
-### 3. Validate the chosen mode
+~~~bash
+python scripts/check_environment.py --config configs/default.yaml --mode image --output-dir outputs/environment_check
+~~~
 
-```bash
-python scripts/check_environment.py --config configs/text_input_example.yaml --mode text --output-dir outputs/environment_check
-# Or for direct top-down image input:
-python scripts/check_environment.py --config configs/image_input_example.yaml --mode image --output-dir outputs/environment_check
-```
+### Natural-language input
 
-The checker returns nonzero when a required component is missing. It does not download weights or start inference. SeedVR2 reports `OPTIONAL_DISABLED` unless explicitly enabled.
+~~~bash
+python -m pipeline.run_pipeline --scene-prompt "A formal garden with a glass greenhouse, fountain, benches, flower beds, stone paths, grass and surrounding trees." --config configs/default.yaml --output outputs/garden
+~~~
 
-### 4A. Natural-language mode
+Text mode pauses at <code>WAITING_VISUAL_REVIEW</code> after producing FLUX top-down candidates. Inspect the contact sheet and approve a strict nadir image before resuming; an unreviewed or hash-mismatched image cannot reach TripoSplat.
 
-```bash
-python -m pipeline.run_pipeline \
-  --scene-prompt "A landscaped formal garden with a glass greenhouse, a central stone fountain, wooden benches, symmetrical flower beds, stone paths, green grass, shrubs and surrounding trees." \
-  --config configs/text_input_example.yaml \
-  --output outputs/garden
-```
+### Top-down image input
 
-### 4B. Top-down image mode
+~~~bash
+python -m pipeline.run_pipeline --input-topdown /path/to/layout.png --config configs/default.yaml --output outputs/garden
+~~~
 
-```bash
-python -m pipeline.run_pipeline \
-  --input-topdown /path/to/topdown.png \
-  --config configs/image_input_example.yaml \
-  --output outputs/garden
-```
+Continue an interrupted run with <code>--resume</code>. The pipeline reuses a stage only when its inputs, outputs, and relevant configuration fingerprint match.
 
-### 5. Approve generated top-down image in text mode
+## FLUX anchor alignment gate
 
-Text mode stops at `WAITING_VISUAL_REVIEW` after FLUX produces top-down candidates. Inspect the candidate contact sheet and image, then follow [docs/pipeline.md](docs/pipeline.md) to write the review record. Continue the same output with `--resume`. The pipeline will not pass an unreviewed or hash-mismatched top-down to TripoSplat.
+The alignment audit is conservative and its metric thresholds are unchanged. <code>GOOD</code> continues. <code>PARTIAL</code> prints a warning and continues. <code>FAIL</code> stops the pipeline by default: it means the clean anchor differs from the proxy beyond the automatic threshold, not necessarily that FixAnything inference would fail.
 
-### 6. Optional SeedVR2
+Inspect the saved anchor/proxy comparison before overriding a failure. Experienced users can explicitly continue with:
 
-SeedVR2 is disabled by default. Configure its independent environment and weights first, then run:
+~~~bash
+python -m pipeline.run_pipeline --input-topdown /path/to/layout.png --config configs/default.yaml --output outputs/garden --allow-anchor-alignment-fail --resume
+~~~
 
-```bash
-python -m pipeline.run_pipeline \
-  --input-topdown /path/to/topdown.png \
-  --config configs/image_input_example.yaml \
-  --output outputs/garden_hd \
-  --enable-seedvr2
-```
+The opt-in config equivalent is:
 
-## Configuration and outputs
+~~~yaml
+flux:
+  anchor_alignment:
+    allow_fail: true
+~~~
 
-- `configs/default.yaml` is the GitHub-safe 61-frame configuration. Machine paths are read from environment variables.
-- `configs/model_registry.example.yaml` and `configs/external_repos.example.yaml` document local dependencies. `configs/model_registry.local.yaml` is machine-specific and ignored by Git.
-- `.env` and `*.local.yaml` are ignored. Never put credentials in tracked YAML.
-- Each run writes inputs, stage outputs, logs, manifests, hashes, reports and comparison media under the selected `--output` directory.
-- `--resume` reuses stages only when their configuration and input/output hashes match. Use `--force-stage <stage>` to intentionally rerun a stage.
+An override prints:
 
-## Common failure points
+> WARNING:<br>
+> FLUX clean anchor failed automatic alignment audit.<br>
+> Continuing because explicit override was enabled.
 
-- `AGENT2TOPDOWN_PROVIDER_NOT_CONFIGURED`: text mode needs an Agent2Topdown checkout or the bundled backend and a valid DeepSeek API key. No mock fallback is allowed.
-- FLUX inference needs ModelScope FLUX.2 Klein 4B Distilled weights, DiffSynth-Studio, a compatible CUDA environment and a visible GPU.
-- The camera planner requires an explicit signed scene up axis and a Python environment with NumPy, SciPy, PyTorch and gsplat.
-- TripoSplat/FixAnything checkpoint layouts and Git revisions are checked before inference.
-- FLUX top-down generation requires a human review step. Endpoint anchor alignment is audited before FixAnything.
-- A successful proxy or endpoint metric does not guarantee perceptual quality or full 3D consistency.
+The reports record <code>ANCHOR_ALIGNMENT_OVERRIDE_USED</code>. A run completed after an alignment failure remains labeled <code>PARTIAL_ANCHOR_ALIGNMENT_OVERRIDE</code>; the override changes pipeline policy only, not the audit metric or its thresholds. Use this only after visually reviewing the comparison.
 
-## External components and license
+## Optional SeedVR2
 
-This repository contains orchestration and project adapters; it does not distribute third-party model weights. See [third_party/README.md](third_party/README.md) and [release_audit/third_party_licenses.md](release_audit/third_party_licenses.md) for verified provenance and license evidence. The project license has not been selected; see [LICENSE_SELECTION_REQUIRED.md](LICENSE_SELECTION_REQUIRED.md). No specific project license is claimed here.
+SeedVR2 is an optional final spatial super-resolution stage and is disabled by default. It does not change the camera trajectory or scene geometry. Configure its separate repository, interpreter, and weights, then opt in:
+
+~~~bash
+python -m pipeline.run_pipeline --input-topdown /path/to/layout.png --config configs/default.yaml --output outputs/garden_hd --enable-seedvr2
+~~~
+
+## External components and model provenance
+
+World-Walker does not redistribute external repositories or model weights. Current project records include:
+
+- Agent2Topdown: bundled layout generation uses a user-configured DeepSeek API provider; its upstream repository URL is not verified in this release
+- [TripoSplat](https://github.com/VAST-AI-Research/TripoSplat), at the verified reference commit listed in <code>configs/external_repos.example.yaml</code>
+- [FLUX.2 Klein 4B](https://huggingface.co/black-forest-labs/FLUX.2-klein-4B), with local Distilled weights obtained from ModelScope; model revision is not pinned
+- [DiffSynth-Studio](https://github.com/modelscope/DiffSynth-Studio), with the inspected local revision recorded in the external repository registry
+- FixAnything/Wan and [Wan2.1](https://github.com/Wan-Video/Wan2.1); the inspected FixAnything checkout's upstream URL is not verified
+- [SeedVR2](https://github.com/ByteDance-Seed/SeedVR2), an optional external stage
+
+Check each component's current code and model terms before use or redistribution. Model access terms are separate from repository code licenses. See [third-party provenance](release_audit/third_party_licenses.md) and [installation details](docs/installation.md).
+
+## Limitations
+
+- Single-image reconstruction produces an approximate proxy; thin or complex structures can deform.
+- Automatic camera planning depends on usable Gaussian geometry and can miss scene-specific composition needs.
+- FLUX anchor editing can shift geometry, which is why endpoint alignment is audited.
+- FixAnything propagates appearance over the current native 61-frame window; exact long-range 3D consistency is not guaranteed.
+- SeedVR2 may improve spatial detail but does not repair geometry.
+- Each external model and repository has independent environment, hardware, and licensing requirements.
+
+## License
+
+The project-level license is under review. No MIT, Apache, or other project license is claimed. Third-party components retain their respective terms; see [LICENSE_SELECTION_REQUIRED.md](LICENSE_SELECTION_REQUIRED.md).

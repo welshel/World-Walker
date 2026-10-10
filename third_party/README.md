@@ -1,4 +1,4 @@
-# External projects and models
+# World-Walker external projects and models
 
 This repository packages pipeline orchestration and project-owned adapters. It does not vendor third-party repositories or distribute checkpoint weights. Configure external paths in `.env` or the ignored `configs/model_registry.local.yaml`. See `configs/external_repos.example.yaml` for upstream, revision and role records.
 

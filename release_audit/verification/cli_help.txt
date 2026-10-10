@@ -1,15 +1,14 @@
-P_VSR0 efficient RoPE shim unavailable: ModuleNotFoundError("No module named 'models'")
 usage: run_pipeline.py [-h]
                        (--input-topdown INPUT_TOPDOWN | --scene-prompt SCENE_PROMPT)
                        [--config CONFIG] --output OUTPUT
                        [--start-stage START_STAGE] [--stop-stage STOP_STAGE]
-                       [--resume] [--force-stage FORCE_STAGE] [--gpu GPU]
-                       [--enable-seedvr2 | --disable-seedvr2] [--agent-mock]
-                       [--dry-run]
+                       [--resume] [--allow-anchor-alignment-fail]
+                       [--force-stage FORCE_STAGE] [--gpu GPU]
+                       [--enable-seedvr2 | --disable-seedvr2] [--dry-run]
 
-Resumable P_PIPE1 garden pipeline: image or natural-language input.
+World-Walker research pipeline: top-down image or natural-language input.
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   --input-topdown INPUT_TOPDOWN, --input INPUT_TOPDOWN
                         existing topdown image (legacy --input alias)
@@ -20,10 +19,13 @@ options:
   --start-stage START_STAGE
   --stop-stage STOP_STAGE
   --resume
+  --allow-anchor-alignment-fail
+                        continue after a failed FLUX anchor alignment audit;
+                        use only after visually inspecting the anchor/proxy
+                        comparison
   --force-stage FORCE_STAGE
   --gpu GPU
   --enable-seedvr2
   --disable-seedvr2
-  --agent-mock          select the external Agent2Topdown mock, if supported
   --dry-run             validate configuration and print planned stages
                         without running models

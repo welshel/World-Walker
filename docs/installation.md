@@ -1,4 +1,4 @@
-# Installation and component setup
+# World-Walker installation
 
 ## A. Orchestration package
 

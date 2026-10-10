@@ -1,0 +1,29 @@
+{
+  "DRY_RUN": true,
+  "INPUT_MODE": "image",
+  "INPUT": "/tmp/layout.png",
+  "SCENE_PROMPT": null,
+  "CONFIG": "configs/default.yaml",
+  "PROJECT_ROOT": ".",
+  "OUTPUT": "outputs/dryrun_default",
+  "PLANNED_STAGES": [
+    "agent2topdown",
+    "input",
+    "triposplat",
+    "camera",
+    "proxy",
+    "flux_anchor",
+    "fixanything",
+    "seedvr2",
+    "report"
+  ],
+  "NATIVE_FRAMES": 61,
+  "TEMPORAL_RESAMPLING": false,
+  "CLEAN_FRAME_INDICES": [
+    0,
+    60
+  ],
+  "SEEDVR2_ENABLED": false,
+  "ANCHOR_ALIGNMENT_FAIL_OVERRIDE_ENABLED": false,
+  "MODEL_EXECUTION": false
+}

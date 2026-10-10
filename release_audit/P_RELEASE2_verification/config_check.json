@@ -1,0 +1,10 @@
+{
+  "CONFIG_FILES": [
+    "default.yaml",
+    "image_input_example.yaml",
+    "text_input_example.yaml"
+  ],
+  "ANCHOR_ALIGNMENT_OVERRIDE_DEFAULT": false,
+  "SEEDVR2_DEFAULT_ENABLED": false,
+  "STATUS": "PASS"
+}

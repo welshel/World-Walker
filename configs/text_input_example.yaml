@@ -1,6 +1,9 @@
-name: natural_language_3d_video_pipeline
+flux:
+  anchor_alignment:
+    allow_fail: false
+name: World-Walker
 project_root: ..
-pipeline_version: P_RELEASE1
+pipeline_version: P_RELEASE2
 input:
   mode: text
   default_topdown: ${TOPDOWN_IMAGE}

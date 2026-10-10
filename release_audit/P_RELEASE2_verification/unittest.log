@@ -1,0 +1,57 @@
+test_cli_requires_exactly_one_input_mode (test_pipeline_integration.Pipe1IntegrationTests) ... ok
+test_final_output_falls_back_to_fixanything_when_seedvr2_is_off_or_fails (test_pipeline_integration.Pipe1IntegrationTests) ... ok
+test_flux_topdown_stage_waits_for_visual_review_before_approval (test_pipeline_integration.Pipe1IntegrationTests) ... ok
+test_input_mode_resolver_rejects_missing_or_ambiguous_values (test_pipeline_integration.Pipe1IntegrationTests) ... ok
+test_legacy_numeric_stage_ids_and_new_names (test_pipeline_integration.Pipe1IntegrationTests) ... ok
+test_pipeline_finalizes_report_only_after_report_stage_runs (test_pipeline_integration.Pipe1IntegrationTests) ... ok
+test_rgba_topdown_has_transparent_white_border_and_opaque_source (test_pipeline_integration.Pipe1IntegrationTests) ... ok
+test_seedvr2_fingerprint_depends_only_on_fixanything_video (test_pipeline_integration.Pipe1IntegrationTests) ... ok
+test_seedvr2_toggle_does_not_invalidate_upstream_stage_config (test_pipeline_integration.Pipe1IntegrationTests) ... ok
+test_text_mode_uses_reviewed_flux_topdown_as_downstream_source (test_pipeline_integration.Pipe1IntegrationTests) ... ok
+test_triposplat_env_adds_the_package_parent_to_pythonpath (test_pipeline_integration.Pipe1IntegrationTests) ... ok
+test_camera_builder_keeps_negative_axis_as_one_cli_argument (test_release1_config.ReleaseOneConfigTests) ... ok
+test_default_config_has_direct_adapter_settings_and_no_runner_templates (test_release1_config.ReleaseOneConfigTests) ... ok
+test_external_stage_adapters_expose_validation_and_command_builders (test_release1_config.ReleaseOneConfigTests) ... ok
+test_local_model_registry_is_ignored (test_release1_config.ReleaseOneConfigTests) ... ok
+test_pipeline_writes_fail_closed_e2e_record_on_stage_error (test_release1_config.ReleaseOneConfigTests) ... ok
+test_real_agent_provider_requires_configured_root_and_key (test_release1_config.ReleaseOneConfigTests) ... ok
+test_unconfigured_environment_returns_component_statuses (test_release1_config.ReleaseOneConfigTests) ... ok
+test_missing_real_provider_fails_without_mock_layout (test_release1_fail_closed.AgentProviderFailClosedTests) ... ok
+test_alignment_policy_participates_in_resume_fingerprint (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... ok
+test_cli_override_is_opt_in (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... ok
+test_config_allow_fail_is_honored (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... WARNING:
+FLUX clean anchor failed automatic alignment audit.
+Continuing because explicit override was enabled.
+ok
+test_explicit_override_allows_fail_and_records_report_field (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... ok
+test_fail_is_blocked_by_default (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... ok
+test_final_report_records_override_and_partial_status (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... ok
+test_fixanything_stage_enters_only_with_explicit_override (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... ok
+test_fixanything_stage_still_blocks_fail_without_override (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... ok
+test_good_continues_without_warning_or_override (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... ok
+test_legacy_resume_manifest_cannot_bypass_policy_fingerprint (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... WARNING:
+FLUX clean anchor failed automatic alignment audit.
+Continuing because explicit override was enabled.
+WARNING:
+FLUX clean anchor failed automatic alignment audit.
+Continuing because explicit override was enabled.
+ok
+test_partial_warns_and_continues_without_override (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... ok
+test_run_one_blocks_fail_by_default (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... ok
+test_run_one_explicit_override_records_and_warns (test_release2_anchor_policy.AnchorAlignmentPolicyTests) ... ok
+test_config_relative_root (test_release_contract.ReleaseContractTests) ... ok
+test_defaults (test_release_contract.ReleaseContractTests) ... ok
+test_dry_run_both_modes (test_release_contract.ReleaseContractTests) ... ok
+test_mutually_exclusive_inputs (test_release_contract.ReleaseContractTests) ... ok
+test_seedvr2_enable_does_not_change_fixanything_fingerprint (test_release_contract.ReleaseContractTests) ... ok
+
+----------------------------------------------------------------------
+Ran 37 tests in 0.251s
+
+OK
+{
+  "FINAL_E2E_STATUS": "FAIL",
+  "failed_stage": "agent2topdown",
+  "error": "RuntimeError: provider unavailable",
+  "output": "/tmp/tmp0n3h_55h/run/e2e_failure.json"
+}

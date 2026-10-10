@@ -1,0 +1,30 @@
+{
+  "source_experiment": "P_PIPE0_garden_end_to_end_smoke",
+  "source_report_status": "P_PIPE1_PASS_IMAGE_TO_FIXANYTHING",
+  "source_anchor_alignment": {
+    "global000": "GOOD",
+    "global060": "GOOD"
+  },
+  "source_fixanything_status": "SUCCESS",
+  "source_frame_count": 61,
+  "source_fps": 24,
+  "frame_indices": [
+    0,
+    15,
+    30,
+    45,
+    60
+  ],
+  "columns": [
+    {
+      "label": "Proxy",
+      "stage": "raw 3D proxy rendering"
+    },
+    {
+      "label": "World-Walker",
+      "stage": "FixAnything output"
+    }
+  ],
+  "layout": "Five sampled frames arranged as rows; two columns; aspect-preserving fit without content edits.",
+  "note": "Historical validated run. This is not output from the P_RELEASE1 fresh-clone E2E."
+}

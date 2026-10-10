@@ -1,4 +1,4 @@
-# Models and external repositories
+# World-Walker models and external repositories
 
 | Component | Interface | Configuration |
 |---|---|---|
