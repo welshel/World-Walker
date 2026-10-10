@@ -1,5 +1,5 @@
 {
-  "tracked_file_count": 108,
+  "tracked_file_count": 109,
   "TRACKED_SECRET_SCAN": "PASS",
   "PRIVATE_PATH_SCAN": "PASS",
   "LARGE_FILE_SCAN": "PASS",
@@ -12,5 +12,6 @@
   "LARGE_FILES": [],
   "MEDIA_WEIGHT_FILES": [],
   "MISSING_README_LINKS": [],
-  "ENV_EXAMPLE_PLACEHOLDER": true
+  "ENV_EXAMPLE_PLACEHOLDER": true,
+  "tracked_content_size_bytes": 908755
 }
